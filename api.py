@@ -52,6 +52,11 @@ SVR_models = {
 }
 
 
+@app.route("/", methods=["GET"])
+def server_status():
+    return jsonify({"status": "Server is running"})
+
+
 # Define the route for the API
 @app.route("/predict", methods=["POST"])
 def predict_yield():
