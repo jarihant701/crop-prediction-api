@@ -1,6 +1,9 @@
+from flask import Flask, request, jsonify
 import joblib
 import numpy as np
-from http import HTTPStatus
+
+# Create the Flask app
+app = Flask(__name__)
 
 # Define the names of the crops
 crop_names = [
@@ -40,17 +43,25 @@ model_features = {
 
 # Load the trained machine learning models for all crops
 KNR_models = {
-    crop: joblib.load(f"../{crop}/{crop}_yield_prediction_KNR_model3.joblib")
+    crop: joblib.load(f"{crop}/{crop}_yield_prediction_KNR_model3.joblib")
     for crop in crop_names
 }
 SVR_models = {
-    crop: joblib.load(f"../{crop}/{crop}_yield_prediction_SVR_model2.joblib")
+    crop: joblib.load(f"{crop}/{crop}_yield_prediction_SVR_model2.joblib")
     for crop in crop_names
 }
 
 
-def handler(req, res):
-    data = json.loads(req.get_data().decode())
+@app.route("/", methods=["GET"])
+def server_status():
+    return jsonify({"status": "Server running"})
+
+
+# Define the route for the API
+@app.route("/predict", methods=["POST"])
+def predict_yield():
+    # Get the JSON data from the POST request
+    data = request.get_json(force=True)
 
     predictions = {}
     for crop, model in KNR_models.items():
@@ -73,4 +84,8 @@ def handler(req, res):
         # Use the model to make a prediction and store it in the predictions dictionary
         predictions[f"{crop}_SVR"] = model.predict(input_data)[0]
     # Return the predictions as a JSON response
-    return json.dumps(predictions), HTTPStatus.OK
+    return jsonify(predictions)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
